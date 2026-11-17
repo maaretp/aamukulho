@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aamukulho</title>
+<meta name="description" content="Terveelliset arkiaamiaiset, viikon suunnittelu ja budjetti">
+<meta name="theme-color" content="#EEF2F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12142A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aamukulho">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one phone-width column, sticky header, fixed bottom tab bar; recipe cards in a 1–3 column grid */
+:root {
+  --bg: #EEF2F4;
+  --surface: #FFFFFF;
+  --ink: #23264F;        /* mustikka */
+  --muted: #5D6385;
+  --line: #D6DCE4;
+  --accent: #B8283F;     /* puolukka */
+  --accent-ink: #FFFFFF;
+  --yolk: #F2B33D;
+  --leaf: #3D7A4A;
+  --soft: #E2E8F0;
+  --warn: #B45309;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", Roboto, sans-serif;
+  --body: "Atkinson Hyperlegible", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --nav-h: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12142A; --surface: #1C1F3A; --ink: #ECEEF8; --muted: #A6ABCB; --line: #2E3358;
+    --accent: #F06A7E; --accent-ink: #1A0B10; --yolk: #F5C462; --leaf: #7CC18A; --soft: #262A4A; --warn: #F0A050;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12142A; --surface: #1C1F3A; --ink: #ECEEF8; --muted: #A6ABCB; --line: #2E3358;
+  --accent: #F06A7E; --accent-ink: #1A0B10; --yolk: #F5C462; --leaf: #7CC18A; --soft: #262A4A; --warn: #F0A050;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--yolk); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: baseline; justify-content: space-between; padding-block: 12px; }
+.brand { font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: -0.02em; }
+.brand span { color: var(--accent); }
+.top-meta { font-size: 13px; color: var(--muted); text-align: right; }
+
+main { padding-block: 18px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom, 0px)); }
+.view-head { margin-bottom: 16px; }
+.view-head h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.01em; }
+.view-head p { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+
+/* Filters */
+.chips { display: flex; flex-wrap: wrap; margin: 0 -4px 16px; }
+.chip { margin: 4px; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); font-size: 15px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Recipe grid */
+.grid { display: grid; grid-template-columns: 1fr; grid-gap: 16px; }
+@media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+.card { display: block; width: 100%; text-align: left; padding: 0; border: 0; background: var(--surface); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 0 var(--line); }
+.pic { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: var(--soft); overflow: hidden; }
+.pic svg, .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@supports not (aspect-ratio: 4 / 3) { .pic { height: 0; padding-top: 75%; } .pic svg, .pic img { position: absolute; top: 0; left: 0; } }
+.card-body { padding: 12px 14px 14px; }
+.card h3 { font-size: 20px; font-weight: 600; }
+.facts { display: flex; flex-wrap: wrap; margin: 6px -6px 0; font-size: 14px; color: var(--muted); }
+.facts > span { margin: 2px 6px; white-space: nowrap; }
+.facts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.tag { position: absolute; left: 10px; top: 10px; background: var(--ink); color: var(--bg); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); background: var(--surface); border-radius: 14px; }
+
+/* Week */
+.budget { background: var(--surface); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.budget-row { display: flex; flex-wrap: wrap; align-items: flex-end; margin: -6px; }
+.budget-row > * { margin: 6px; }
+.field label { display: block; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.field input { width: 110px; min-height: 44px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); font-variant-numeric: tabular-nums; font-size: 18px; }
+.stepper { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); }
+.stepper button { width: 44px; height: 44px; border: 0; background: transparent; font-size: 22px; line-height: 1; }
+.stepper output { min-width: 28px; text-align: center; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.meter { margin-top: 16px; }
+.meter-nums { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.meter-nums .big { font-family: var(--display); font-weight: 800; font-size: 32px; font-variant-numeric: tabular-nums; }
+.meter-nums .of { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 12px; border-radius: 99px; background: var(--soft); overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: var(--leaf); border-radius: 99px; transition: width .3s; }
+.bar.over i { background: var(--accent); }
+.status { margin-top: 8px; font-size: 15px; font-weight: 700; }
+.status.ok { color: var(--leaf); } .status.over { color: var(--accent); }
+.actions { display: flex; flex-wrap: wrap; margin: 10px -5px 0; }
+.btn { margin: 5px; min-height: 44px; padding: 10px 16px; border-radius: 10px; border: 1.5px solid var(--ink); background: transparent; font-weight: 700; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+.days { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: 16px; overflow: hidden; }
+.days li + li { border-top: 1px solid var(--line); }
+.day { display: flex; align-items: center; width: 100%; padding: 10px 14px; border: 0; background: transparent; text-align: left; min-height: 72px; }
+.day .dname { width: 34px; flex: none; font-family: var(--display); font-weight: 800; font-size: 18px; }
+.day .thumb { width: 64px; height: 48px; flex: none; border-radius: 8px; overflow: hidden; margin-right: 12px; background: var(--soft); }
+.day .thumb svg, .day .thumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.day .dtext { flex: 1; min-width: 0; }
+.day .dtitle { font-weight: 700; display: block; }
+.day .dsub { font-size: 14px; color: var(--muted); display: block; }
+.day .dsub.prep { color: var(--warn); }
+.day .dprice { font-variant-numeric: tabular-nums; font-weight: 700; margin-left: 8px; white-space: nowrap; }
+.day.unset .dtitle { color: var(--muted); font-weight: 400; }
+.note { font-size: 14px; color: var(--muted); margin-top: 12px; }
+
+.prepbox { margin-top: 16px; background: var(--surface); border-radius: 16px; padding: 16px; border-left: 0; }
+.prepbox h3 { font-size: 20px; margin-bottom: 8px; }
+.prepbox ul { margin: 0; padding-left: 20px; }
+.prepbox li { margin: 4px 0; }
+
+/* Shopping */
+.shop-sum { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; }
+.shop-sum .big { font-family: var(--display); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
+.shop-group { margin-bottom: 16px; }
+.shop-group h3 { font-size: 13px; font-family: var(--body); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px 4px; }
+.shop-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: 14px; overflow: hidden; }
+.shop-list li + li { border-top: 1px solid var(--line); }
+.shop-list label { display: flex; align-items: center; padding: 10px 14px; min-height: 52px; cursor: pointer; }
+.shop-list input { width: 22px; height: 22px; margin: 0 12px 0 0; accent-color: var(--leaf); flex: none; }
+.shop-list .iname { flex: 1; min-width: 0; }
+.shop-list .iamt { font-variant-numeric: tabular-nums; color: var(--muted); margin-left: 8px; white-space: nowrap; }
+.shop-list input:checked ~ .iname { text-decoration: line-through; color: var(--muted); }
+
+/* Tips */
+.tips { display: grid; grid-template-columns: 1fr; grid-gap: 16px; }
+@media (min-width: 720px) { .tips { grid-template-columns: 1fr 1fr; } }
+.tip { background: var(--surface); border-radius: 16px; padding: 16px 18px; }
+.tip h3 { font-size: 21px; margin-bottom: 4px; }
+.tip .when { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.tip ul { margin: 8px 0 0; padding-left: 20px; }
+.tip li { margin: 6px 0; }
+.pantry { display: grid; grid-template-columns: 1fr; grid-gap: 0; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.pantry div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.pantry span:last-child { white-space: nowrap; margin-left: 10px; }
+
+/* Bottom nav */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+nav.tabs .in { display: flex; max-width: 640px; margin: 0 auto; }
+nav.tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: var(--nav-h); text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 700; }
+nav.tabs a svg { width: 26px; height: 26px; margin-bottom: 2px; }
+nav.tabs a[aria-current="page"] { color: var(--accent); }
+
+/* Sheet */
+.sheet-back { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; background: rgba(10, 12, 30, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 640px; max-height: 92%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); border-radius: 18px 18px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 700px) { .sheet-back { align-items: center; } .sheet { border-radius: 18px; max-height: 88%; } }
+.sheet-head { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 10px max(16px, env(safe-area-inset-left, 0px)) 10px 16px; background: var(--bg); }
+.sheet-head h2 { font-size: 22px; font-weight: 800; }
+.x { width: 44px; height: 44px; border-radius: 99px; border: 0; background: var(--soft); font-size: 22px; line-height: 1; flex: none; }
+.sheet-body { padding: 0 16px; }
+.sheet .pic { border-radius: 14px; }
+.photo-row { display: flex; flex-wrap: wrap; margin: 6px -4px 0; }
+.photo-row label, .photo-row button { margin: 4px; font-size: 14px; color: var(--muted); background: none; border: 0; padding: 8px 4px; text-decoration: underline; cursor: pointer; }
+.photo-row input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.sec { margin-top: 18px; }
+.sec h3 { font-size: 13px; font-family: var(--body); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.ingr { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: 12px; }
+.ingr li { display: flex; justify-content: space-between; padding: 9px 14px; }
+.ingr li + li { border-top: 1px solid var(--line); }
+.ingr .amt { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; margin-left: 12px; }
+.steps { margin: 0; padding-left: 22px; }
+.steps li { margin: 8px 0; padding-left: 4px; }
+.hint { background: var(--surface); border-radius: 12px; padding: 12px 14px; border: 1.5px dashed var(--yolk); }
+.add-row { display: flex; flex-wrap: wrap; align-items: center; margin: 0 -5px; }
+.add-row > * { margin: 5px; }
+.add-row select { min-height: 44px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); }
+.pick { list-style: none; margin: 0; padding: 0; background: var(--surface); border-radius: 14px; overflow: hidden; }
+.pick li + li { border-top: 1px solid var(--line); }
+.toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 700; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1 class="brand">Aamu<span>kulho</span></h1>
+    <div class="top-meta">Terveelliset arkiaamiaiset<br>ja viikon budjetti</div>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+
+<nav class="tabs" aria-label="Päävalikko">
+  <div class="in">
+    <a href="#reseptit" data-view="reseptit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5"/></svg>Reseptit</a>
+    <a href="#viikko" data-view="viikko"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Viikko</a>
+    <a href="#ostokset" data-view="ostokset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Ostokset</a>
+    <a href="#vinkit" data-view="vinkit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Vinkit</a>
+  </div>
+</nav>
+
+<script>
+(function () {
+"use strict";
+
+/* ---------- Data ---------- */
+// Hinta-arviot €/yksikkö, perustuotteet suomalaisissa marketeissa syksyllä 2026.
+var ING = {
+  "kaurahiutaleet":        { u: "dl",   p: 0.06,  c: "vilja" },
+  "ruishiutaleet":         { u: "dl",   p: 0.09,  c: "vilja" },
+  "ruisleipä":             { u: "pala", p: 0.18,  c: "vilja" },
+  "maito tai kaurajuoma":  { u: "dl",   p: 0.11,  c: "maito" },
+  "maustamaton jogurtti":  { u: "dl",   p: 0.19,  c: "maito" },
+  "maitorahka":            { u: "g",    p: 0.004, c: "maito" },
+  "raejuusto":             { u: "g",    p: 0.009, c: "maito" },
+  "juustoraaste":          { u: "g",    p: 0.010, c: "maito" },
+  "kananmuna":             { u: "kpl",  p: 0.26,  c: "maito" },
+  "pakastemustikat":       { u: "dl",   p: 0.27,  c: "marja" },
+  "pakastemarjasekoitus":  { u: "dl",   p: 0.25,  c: "marja" },
+  "pakastepuolukat":       { u: "dl",   p: 0.24,  c: "marja" },
+  "banaani":               { u: "kpl",  p: 0.29,  c: "marja" },
+  "omena":                 { u: "kpl",  p: 0.40,  c: "marja" },
+  "tomaatti":              { u: "kpl",  p: 0.45,  c: "kasvis" },
+  "kurkku":                { u: "kpl",  p: 1.50,  c: "kasvis" },
+  "paprika":               { u: "kpl",  p: 1.20,  c: "kasvis" },
+  "porkkana":              { u: "kpl",  p: 0.10,  c: "kasvis" },
+  "pakastepinaatti":       { u: "dl",   p: 0.12,  c: "kasvis" },
+  "hummus":                { u: "g",    p: 0.010, c: "muut" },
+  "auringonkukansiemenet": { u: "rkl",  p: 0.06,  c: "muut" },
+  "chiansiemenet":         { u: "rkl",  p: 0.15,  c: "muut" },
+  "hunaja":                { u: "tl",   p: 0.05,  c: "kaappi" },
+  "kaneli":                { u: "tl",   p: 0.03,  c: "kaappi" },
+  "rypsiöljy":             { u: "rkl",  p: 0.04,  c: "kaappi" }
+};
+var CATS = [
+  ["vilja", "Viljat ja leipä"], ["maito", "Maito, munat ja juusto"], ["marja", "Hedelmät ja marjat"],
+  ["kasvis", "Kasvikset"], ["muut", "Muut"], ["kaappi", "Tarkista kaapista"]
+];
+
+var R = [
+  { id: "tuorepuuro", name: "Mustikkatuorepuuro", min: 5, prot: 13, prep: "Sekoita purkkiin illalla",
+    tags: ["nopea", "etukateen"],
+    ing: [["kaurahiutaleet", 0.75], ["maito tai kaurajuoma", 1.5], ["maustamaton jogurtti", 0.5], ["chiansiemenet", 0.5], ["pakastemustikat", 0.5], ["kaneli", 0.25]],
+    steps: ["Sekoita kaurahiutaleet, maito, jogurtti, chiansiemenet ja kaneli lasipurkkiin.", "Lisää jäiset mustikat päälle ja laita kansi kiinni.", "Anna tekeytyä jääkaapissa yön yli. Aamulla nosta pöytään sellaisenaan."],
+    tip: "Tee kolme purkkia kerralla. Ne säilyvät jääkaapissa kolme päivää.",
+    art: { bg: "#C9DCE6", v: "jar", fill: "#EADDC6", items: [["oat", 8], ["chia", 26], ["blueberry", 14], ["cinnamon", 10]] } },
+
+  { id: "omenapuuro", name: "Omena-kanelipuuro", min: 8, prot: 10, prep: "",
+    tags: [],
+    ing: [["kaurahiutaleet", 0.75], ["maito tai kaurajuoma", 0.75], ["omena", 0.5], ["kaneli", 0.5], ["auringonkukansiemenet", 1]],
+    steps: ["Kiehauta 1,5 dl vettä ja hiutaleet kattilassa. Keitä hiljalleen 3 minuuttia.", "Lisää maito ja anna lämmetä.", "Raasta tai kuutioi omena puuron päälle. Ripottele kaneli ja siemenet."],
+    tip: "Mikrossa: hiutaleet ja vesi kulhoon, 2 minuuttia täydellä teholla, sekoita välissä.",
+    art: { bg: "#F1D9C9", v: "bowl", fill: "#E8D6B4", spoon: 1, items: [["apple", 7], ["seed", 16], ["cinnamon", 22]] } },
+
+  { id: "ruispuuro", name: "Puolukka-ruispuuro", min: 10, prot: 9, prep: "",
+    tags: [],
+    ing: [["ruishiutaleet", 0.75], ["maito tai kaurajuoma", 0.5], ["pakastepuolukat", 0.5], ["hunaja", 1]],
+    steps: ["Kiehauta 2 dl vettä ja ripaus suolaa. Lisää ruishiutaleet.", "Keitä hiljalleen 5–6 minuuttia ja sekoita välillä.", "Lisää tilkka maitoa, päälle puolukat ja hunaja."],
+    tip: "Puolukka on halpa ja täynnä kuitua. Ota pakkasesta illalla jääkaappiin sulamaan.",
+    art: { bg: "#DDE6D3", v: "bowl", fill: "#A98B78", spoon: 1, items: [["lingon", 26], ["honey", 1]] } },
+
+  { id: "rahkakulho", name: "Rahka-marjakulho", min: 3, prot: 22, prep: "",
+    tags: ["nopea", "proteiini"],
+    ing: [["maitorahka", 125], ["maustamaton jogurtti", 0.5], ["pakastemarjasekoitus", 1], ["kaurahiutaleet", 0.25], ["auringonkukansiemenet", 1]],
+    steps: ["Sekoita rahka ja jogurtti kulhossa notkeaksi.", "Lisää marjat suoraan pakkasesta. Ne sulavat sillä aikaa kun keität kahvin.", "Ripottele päälle hiutaleet ja siemenet."],
+    tip: "Rahka tekee tästä nopeimman proteiiniaamiaisen. 250 g purkki riittää kahdelle.",
+    art: { bg: "#E6DAEC", v: "bowl", fill: "#F7F4EE", spoon: 1, items: [["berrymix", 16], ["oat", 9], ["seed", 12]] } },
+
+  { id: "munaleipa", name: "Munaleipä ja tomaatti", min: 4, prot: 15, prep: "Keitä munat valmiiksi sunnuntaina",
+    tags: ["nopea", "etukateen", "proteiini"],
+    ing: [["ruisleipä", 2], ["kananmuna", 1], ["tomaatti", 0.5], ["kurkku", 0.1], ["juustoraaste", 10]],
+    steps: ["Viipaloi valmiiksi keitetty kananmuna.", "Nosta ruisleivän päälle munaviipaleet, tomaatti ja kurkku.", "Mausta mustapippurilla."],
+    tip: "Keitä sunnuntaina kuusi munaa kerralla (9 min). Kuorimattomina ne säilyvät jääkaapissa viikon.",
+    art: { bg: "#F3E3B5", v: "plate", items: [["bread", 92, 74, -8], ["bread", 140, 104, 12], ["egg", 82, 66], ["egg", 104, 80], ["tomato", 150, 98], ["cucumber", 132, 112]] } },
+
+  { id: "pinaattimunakas", name: "Pinaattimunakas", min: 10, prot: 19, prep: "",
+    tags: ["proteiini"],
+    ing: [["kananmuna", 2], ["pakastepinaatti", 1], ["juustoraaste", 20], ["maito tai kaurajuoma", 0.25], ["rypsiöljy", 0.5], ["ruisleipä", 1]],
+    steps: ["Kuumenna öljy pannulla ja sulata pinaatti siinä 2 minuuttia.", "Vatkaa munat ja maito, kaada pannulle.", "Kun pinta hyytyy, ripottele juusto ja taita munakas kahtia. Tarjoa ruisleivän kanssa."],
+    tip: "Pakastepinaatti on halvempaa kuin tuore eikä pilaannu jääkaappiin.",
+    art: { bg: "#CFD8E8", v: "pan", items: [["omelet", 1]] } },
+
+  { id: "pannarit", name: "Banaani-kaurapannarit", min: 15, prot: 11, prep: "",
+    tags: [],
+    ing: [["banaani", 1], ["kananmuna", 1], ["kaurahiutaleet", 0.5], ["kaneli", 0.25], ["rypsiöljy", 0.5], ["pakastemustikat", 0.25]],
+    steps: ["Muussaa banaani haarukalla. Sekoita joukkoon muna, hiutaleet ja kaneli.", "Paista pieniä lettuja öljytyllä pannulla keskilämmöllä noin 2 min per puoli.", "Nosta päälle mustikat."],
+    tip: "Hyvä tapa käyttää ruskeat banaanit. Viikonlopun aamiainen, kun on aikaa.",
+    art: { bg: "#F1D9C9", v: "plate", items: [["pancake", 104, 86], ["pancake", 132, 76], ["pancake", 120, 104], ["blueberry", 9], ["banana", 3]] } },
+
+  { id: "smoothie", name: "Marjasmoothie", min: 4, prot: 12, prep: "",
+    tags: ["nopea"],
+    ing: [["pakastemarjasekoitus", 1], ["banaani", 0.5], ["maustamaton jogurtti", 1.5], ["kaurahiutaleet", 0.25], ["maito tai kaurajuoma", 0.5]],
+    steps: ["Laita kaikki ainekset tehosekoittimeen.", "Surauta tasaiseksi noin 30 sekuntia.", "Lisää maitoa, jos haluat ohuempaa."],
+    tip: "Pakasta ylikypsät banaanit paloina. Smoothiesta tulee niistä paksumpaa.",
+    art: { bg: "#DDE6D3", v: "glass", fill: "#8E4A7A", items: [["berrymix", 5]] } },
+
+  { id: "raejuustoleipa", name: "Raejuusto-paprikaleipä", min: 3, prot: 17, prep: "",
+    tags: ["nopea", "proteiini"],
+    ing: [["ruisleipä", 2], ["raejuusto", 75], ["paprika", 0.25], ["kurkku", 0.1]],
+    steps: ["Levitä raejuusto ruisleivän päälle.", "Viipaloi paprika ja kurkku päälle.", "Mausta mustapippurilla tai yrteillä."],
+    tip: "Raejuustossa on paljon proteiinia ja vähän rasvaa. Käy myös leivän päälle levitteen sijaan.",
+    art: { bg: "#C9DCE6", v: "board", items: [["bread", 92, 88, -6], ["bread", 150, 90, 8], ["cottage", 92, 88], ["cottage", 150, 90], ["paprika", 9], ["cucumber", 120, 130]] } },
+
+  { id: "granola", name: "Jogurtti ja kotigranola", min: 3, prot: 12, prep: "Paahda granola sunnuntaina",
+    tags: ["nopea", "etukateen"],
+    ing: [["maustamaton jogurtti", 2], ["kaurahiutaleet", 0.5], ["auringonkukansiemenet", 1], ["hunaja", 1], ["rypsiöljy", 0.5], ["omena", 0.5]],
+    steps: ["Granola: sekoita hiutaleet, siemenet, hunaja ja öljy. Paahda 175 asteessa 15 minuuttia, sekoita kerran.", "Anna jäähtyä ja säilytä kannellisessa purkissa.", "Aamulla: jogurtti kulhoon, päälle granola ja omenakuutiot."],
+    tip: "Tee kahdeksankertainen satsi. Kotigranolassa on murto-osa kaupan granolan sokerista ja hinnasta.",
+    art: { bg: "#E6DAEC", v: "bowl", fill: "#F7F4EE", spoon: 1, items: [["granola", 20], ["apple", 5], ["seed", 8]] } },
+
+  { id: "hummusleipa", name: "Hummus-porkkanaleipä", min: 4, prot: 10, prep: "",
+    tags: ["nopea"],
+    ing: [["ruisleipä", 2], ["hummus", 40], ["porkkana", 0.5], ["kurkku", 0.1]],
+    steps: ["Levitä hummus ruisleiville.", "Raasta tai viipaloi porkkana päälle, lisää kurkku.", "Halutessasi päälle ripaus seesaminsiemeniä."],
+    tip: "Vegaaninen vaihtoehto. Hummuksen voi tehdä itse kikherneistä purkista, se on vielä halvempaa.",
+    art: { bg: "#F3E3B5", v: "board", items: [["bread", 92, 88, 6], ["bread", 150, 90, -10], ["hummus", 92, 88], ["hummus", 150, 90], ["carrot", 10], ["cucumber", 120, 132]] } },
+
+  { id: "munamuffinit", name: "Munamuffinit", min: 25, prot: 16, prep: "Paista muffinit sunnuntaina",
+    tags: ["etukateen", "proteiini"],
+    ing: [["kananmuna", 2], ["paprika", 0.25], ["pakastepinaatti", 0.5], ["juustoraaste", 20]],
+    steps: ["Vatkaa munat ja mausta suolalla ja pippurilla.", "Jaa paprikakuutiot, pinaatti ja juusto muffinivuokiin, kaada muna päälle.", "Paista 200 asteessa 18–20 minuuttia. Aamulla lämmitä mikrossa 30 sekuntia."],
+    tip: "Kuusi muffinia kerralla. Ne säilyvät jääkaapissa kolme päivää ja kulkevat mukana työmatkalle.",
+    art: { bg: "#CFD8E8", v: "plate", items: [["muffin", 98, 72], ["muffin", 142, 76], ["muffin", 96, 112], ["muffin", 140, 116]] } }
+];
+var BYID = {}; R.forEach(function (r) { BYID[r.id] = r; });
+
+function cost(r) { var s = 0; r.ing.forEach(function (i) { s += ING[i[0]].p * i[1]; }); return s; }
+R.forEach(function (r) { r.cost = cost(r); });
+
+var DAYS = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
+var DAYS_LONG = ["Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai", "Sunnuntai"];
+
+/* ---------- State (stored only in this browser) ---------- */
+var S = { plan: ["tuorepuuro", "munaleipa", "tuorepuuro", "rahkakulho", "omenapuuro", "pannarit", "pinaattimunakas"], people: 2, budget: 15, got: {}, filter: "kaikki", example: true };
+function load() {
+  try {
+    var raw = localStorage.getItem("aamukulho");
+    if (raw) { var o = JSON.parse(raw); for (var k in o) if (o.hasOwnProperty(k)) S[k] = o[k]; }
+  } catch (e) {}
+}
+function save() { try { localStorage.setItem("aamukulho", JSON.stringify(S)); } catch (e) {} }
+function photo(id) { try { return localStorage.getItem("photo_" + id); } catch (e) { return null; } }
+load();
+
+/* ---------- Helpers ---------- */
+function eur(n) { return n.toFixed(2).replace(".", ",") + " €"; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function fmtAmt(n, u) {
+  var v;
+  if (u === "kpl" || u === "pala") v = n < 1 && u === "kpl" ? String(Math.round(n * 4) / 4).replace(".", ",") : String(Math.ceil(n * 2) / 2).replace(".", ",");
+  else if (u === "g") v = String(Math.round(n / 5) * 5);
+  else v = String(Math.round(n * 4) / 4).replace(".", ",");
+  if (u === "pala") return v + (v === "1" ? " pala" : " palaa");
+  return v + " " + u;
+}
+function shopAmt(n, u) {
+  if (u === "kpl") return Math.ceil(n - 0.01) + " kpl";
+  if (u === "pala") return Math.ceil(n) + " palaa";
+  if (u === "g") return (Math.ceil(n / 50) * 50) + " g";
+  return String(Math.ceil(n * 2) / 2).replace(".", ",") + " " + u;
+}
+
+/* ---------- Illustrations: flat, top-down tableware, drawn in SVG ---------- */
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+
+function shape(k, x, y, r, rot) {
+  var g = '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (rot || 0).toFixed(0) + ')">', e = "</g>";
+  switch (k) {
+    case "blueberry": return g + '<circle r="5" fill="#363A78"/><circle r="1.6" cx="-1.6" cy="-1.6" fill="#8F96D0"/><circle r="1.1" cx="1.4" cy="1.4" fill="#22254F"/>' + e;
+    case "lingon": return g + '<circle r="3.4" fill="#C42B3B"/><circle r="1" cx="-1" cy="-1" fill="#F28A94"/>' + e;
+    case "berrymix":
+      var c = r() < 0.4 ? '<circle r="5.5" fill="#B8325A"/><circle r="1.4" cx="-2" cy="-1" fill="#E07A98"/><circle r="1.4" cx="1.6" cy="1.6" fill="#E07A98"/><circle r="1.4" cx="1.4" cy="-2" fill="#E07A98"/>'
+        : r() < 0.6 ? '<circle r="5" fill="#363A78"/><circle r="1.6" cx="-1.6" cy="-1.6" fill="#8F96D0"/>'
+        : '<circle r="3.8" fill="#2B1E2E"/><circle r="1" cx="-1" cy="-1" fill="#6E5B70"/>';
+      return g + c + e;
+    case "banana": return g + '<circle r="9" fill="#F6E7A8" stroke="#E6D08A" stroke-width="1.5"/><circle r="1.1" cx="0" cy="-2.5" fill="#BFA65F"/><circle r="1.1" cx="2.2" cy="1.3" fill="#BFA65F"/><circle r="1.1" cx="-2.2" cy="1.3" fill="#BFA65F"/>' + e;
+    case "apple": return g + '<ellipse rx="10" ry="5" fill="#C93A33"/><ellipse rx="9" ry="4" cy="1" fill="#F4EBC8"/>' + e;
+    case "seed": return g + '<ellipse rx="2.6" ry="1.3" fill="#6F6A5E"/><ellipse rx="1.6" ry="0.5" fill="#B7B0A0"/>' + e;
+    case "chia": return g + '<circle r="0.9" fill="#3A3A3A"/>' + e;
+    case "cinnamon": return g + '<circle r="1.5" fill="#A0622D" opacity="0.55"/>' + e;
+    case "oat": return g + '<ellipse rx="4" ry="2.8" fill="#EEDFBE" stroke="#CDB68C" stroke-width="0.8"/>' + e;
+    case "granola": return g + '<path d="M-4 -2 L-1 -5 L4 -3 L5 2 L1 5 L-4 3 Z" fill="#B98A4E" stroke="#8E6635" stroke-width="0.8"/>' + e;
+    case "carrot": return g + '<circle r="6" fill="#EE8A2C"/><circle r="3.2" fill="#F6AE64"/>' + e;
+    case "paprika": return g + '<rect x="-3" y="-3" width="6.5" height="6" rx="1.5" fill="#D8402F"/>' + e;
+    case "spinach": return g + '<ellipse rx="6" ry="3.5" fill="#3E7A3A"/>' + e;
+    case "honey": return '<path d="M' + (x - 26) + ' ' + (y - 8) + ' q 13 -14 26 0 t 26 0" fill="none" stroke="#E7A93A" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>';
+    case "tomato": return g + '<circle r="13" fill="#D9412F"/><circle r="10" fill="#EE6A52"/><circle r="1.5" cx="-4" cy="-2" fill="#F7D488"/><circle r="1.5" cx="3" cy="-4" fill="#F7D488"/><circle r="1.5" cx="2" cy="4" fill="#F7D488"/><circle r="1.5" cx="-3" cy="4" fill="#F7D488"/>' + e;
+    case "cucumber": return g + '<circle r="10" fill="#4F8A3E"/><circle r="8.3" fill="#D6EBB0"/><circle r="1" cx="-2" cy="0" fill="#9DBF73"/><circle r="1" cx="2" cy="0" fill="#9DBF73"/><circle r="1" cx="0" cy="2.5" fill="#9DBF73"/><circle r="1" cx="0" cy="-2.5" fill="#9DBF73"/>' + e;
+    case "bread": return g + '<rect x="-30" y="-25" width="60" height="50" rx="12" fill="#4E3226"/><rect x="-26" y="-21" width="52" height="42" rx="9" fill="#76523F"/>' +
+      '<circle r="1.2" cx="-12" cy="-8" fill="#5C3D2E"/><circle r="1.2" cx="8" cy="-12" fill="#5C3D2E"/><circle r="1.2" cx="14" cy="6" fill="#5C3D2E"/><circle r="1.2" cx="-6" cy="10" fill="#5C3D2E"/><circle r="1.2" cx="2" cy="0" fill="#5C3D2E"/>' + e;
+    case "egg": return g + '<ellipse rx="13" ry="10" fill="#FFFFFF" stroke="#E8E4DA" stroke-width="1"/><circle r="5.8" fill="#F2B33D"/>' + e;
+    case "cottage": return g + '<circle r="4" cx="-10" cy="-6" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="-2" cy="-10" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="7" cy="-5" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="-6" cy="3" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="3" cy="4" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="12" cy="5" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="-12" cy="10" fill="#FFF" stroke="#E5E1D6"/><circle r="4" cx="-1" cy="12" fill="#FFF" stroke="#E5E1D6"/>' + e;
+    case "hummus": return g + '<path d="M-20 -14 Q0 -22 20 -14 Q25 0 18 14 Q0 20 -18 14 Q-25 0 -20 -14Z" fill="#E2C79A"/><path d="M-8 -4 q8 -6 14 2 q-4 8 -12 4" fill="none" stroke="#C9A974" stroke-width="1.5"/><circle r="1.6" cx="6" cy="-6" fill="#B5462E"/>' + e;
+    case "pancake": return g + '<circle r="25" fill="#C98B48"/><circle r="22" fill="#E2AE6C"/><circle r="2" cx="-8" cy="-6" fill="#D39A57"/><circle r="2.4" cx="6" cy="8" fill="#D39A57"/><circle r="1.6" cx="9" cy="-9" fill="#D39A57"/>' + e;
+    case "muffin": return g + '<circle r="20" fill="#D9C2A0"/><circle r="17" fill="#EDC85A"/><rect x="-7" y="-6" width="5" height="5" rx="1" fill="#D8402F"/><rect x="4" y="3" width="5" height="5" rx="1" fill="#D8402F"/><ellipse cx="3" cy="-7" rx="4" ry="2.5" fill="#3E7A3A"/><ellipse cx="-5" cy="6" rx="4" ry="2.5" fill="#3E7A3A"/>' + e;
+    case "omelet": return '<path d="M' + (x - 44) + ' ' + (y + 8) + ' A 46 46 0 0 1 ' + (x + 46) + ' ' + (y + 8) + ' Q ' + x + ' ' + (y + 22) + ' ' + (x - 44) + ' ' + (y + 8) + ' Z" fill="#F2C94C" stroke="#DDAA2E" stroke-width="2"/>' +
+      '<ellipse cx="' + (x - 18) + '" cy="' + (y - 14) + '" rx="7" ry="4" fill="#3E7A3A"/><ellipse cx="' + (x + 10) + '" cy="' + (y - 22) + '" rx="6" ry="3.5" fill="#3E7A3A"/><ellipse cx="' + (x + 22) + '" cy="' + (y - 4) + '" rx="7" ry="4" fill="#3E7A3A"/><ellipse cx="' + (x - 4) + '" cy="' + (y - 2) + '" rx="5" ry="3" fill="#3E7A3A"/>';
+  }
+  return "";
+}
+
+function scatter(r, cx, cy, R, n, min, out) {
+  var pts = [], tries = 0;
+  while (pts.length < n && tries < n * 40) {
+    tries++;
+    var a = r() * Math.PI * 2, d = Math.sqrt(r()) * R, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, ok = true;
+    for (var i = 0; i < pts.length; i++) { var dx = pts[i][0] - x, dy = pts[i][1] - y; if (dx * dx + dy * dy < min * min) { ok = false; break; } }
+    for (var j = 0; ok && j < out.length; j++) { var ex = out[j][0] - x, ey = out[j][1] - y; if (ex * ex + ey * ey < out[j][2] * out[j][2]) ok = false; }
+    if (ok) pts.push([x, y]);
+  }
+  return pts;
+}
+
+var MIN = { blueberry: 9, lingon: 6, berrymix: 10, banana: 17, apple: 14, seed: 4, chia: 2, cinnamon: 3, oat: 7, granola: 9, carrot: 11, paprika: 8, spinach: 9 };
+
+function art(rec) {
+  var a = rec.art, r = rng(hash(rec.id)), cx = 120, cy = 90, s = "", inner = 0, held = [];
+  s += '<rect width="240" height="180" fill="' + a.bg + '"/>';
+  // linen weave texture
+  for (var i = 0; i < 240; i += 6) s += '<rect x="' + i + '" y="0" width="2" height="180" fill="#FFFFFF" opacity="0.10"/>';
+  if (a.spoon) s += '<g transform="translate(206 120) rotate(-28)"><ellipse rx="9" ry="12" fill="#B9BEC6"/><ellipse rx="6.5" ry="9" fill="#D3D7DD"/><rect x="-2.2" y="10" width="4.4" height="44" rx="2.2" fill="#B9BEC6"/></g>';
+  if (a.v === "bowl") {
+    s += '<circle cx="' + (cx + 5) + '" cy="' + (cy + 6) + '" r="66" fill="#000" opacity="0.12"/><circle cx="' + cx + '" cy="' + cy + '" r="64" fill="#FBFAF7"/><circle cx="' + cx + '" cy="' + cy + '" r="56" fill="#EAE7E0"/><circle cx="' + cx + '" cy="' + cy + '" r="52" fill="' + a.fill + '"/>';
+    inner = 44;
+  } else if (a.v === "jar") {
+    s += '<g transform="translate(200 34)"><circle r="26" fill="#000" opacity="0.10" cx="3" cy="4"/><circle r="26" fill="#C8324A"/><circle r="20" fill="#DE5568"/></g>';
+    s += '<circle cx="' + (cx + 4) + '" cy="' + (cy + 5) + '" r="52" fill="#000" opacity="0.12"/><circle cx="' + cx + '" cy="' + cy + '" r="50" fill="#DCE9EE"/><circle cx="' + cx + '" cy="' + cy + '" r="43" fill="' + a.fill + '"/><path d="M' + (cx - 38) + ' ' + (cy - 20) + ' A 44 44 0 0 1 ' + (cx - 16) + ' ' + (cy - 40) + '" stroke="#FFFFFF" stroke-width="4" fill="none" opacity="0.7" stroke-linecap="round"/>';
+    inner = 36;
+  } else if (a.v === "glass") {
+    s += '<circle cx="' + (cx + 4) + '" cy="' + (cy + 5) + '" r="46" fill="#000" opacity="0.12"/><circle cx="' + cx + '" cy="' + cy + '" r="44" fill="#E8EEF1"/><circle cx="' + cx + '" cy="' + cy + '" r="38" fill="' + a.fill + '"/><circle cx="' + cx + '" cy="' + cy + '" r="30" fill="#A45C8E" opacity="0.6"/>';
+    s += '<line x1="' + (cx + 8) + '" y1="' + (cy - 6) + '" x2="' + (cx + 78) + '" y2="' + (cy - 62) + '" stroke="#F2B33D" stroke-width="7" stroke-linecap="round"/><line x1="' + (cx + 8) + '" y1="' + (cy - 6) + '" x2="' + (cx + 78) + '" y2="' + (cy - 62) + '" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round" opacity="0.7"/>';
+    s += '<g transform="translate(46 140)"><circle r="16" fill="#F6E7A8" stroke="#E6D08A" stroke-width="2"/><circle r="1.6" cy="-3" fill="#BFA65F"/><circle r="1.6" cx="2.8" cy="1.8" fill="#BFA65F"/><circle r="1.6" cx="-2.8" cy="1.8" fill="#BFA65F"/></g>';
+    inner = 0;
+  } else if (a.v === "plate") {
+    s += '<circle cx="' + (cx + 5) + '" cy="' + (cy + 6) + '" r="74" fill="#000" opacity="0.12"/><circle cx="' + cx + '" cy="' + cy + '" r="72" fill="#FBFAF7"/><circle cx="' + cx + '" cy="' + cy + '" r="56" fill="none" stroke="#E7E3DA" stroke-width="2"/>';
+    inner = 50;
+  } else if (a.v === "pan") {
+    s += '<rect x="170" y="80" width="70" height="14" rx="7" fill="#2A2B33"/><circle cx="' + (cx - 6) + '" cy="' + (cy + 6) + '" r="66" fill="#000" opacity="0.15"/><circle cx="' + (cx - 10) + '" cy="' + cy + '" r="64" fill="#34353D"/><circle cx="' + (cx - 10) + '" cy="' + cy + '" r="56" fill="#464852"/>';
+    cx -= 10;
+  } else if (a.v === "board") {
+    s += '<rect x="34" y="40" width="182" height="114" rx="16" fill="#000" opacity="0.12"/><rect x="28" y="34" width="182" height="114" rx="16" fill="#C99A64"/><rect x="36" y="42" width="166" height="98" rx="12" fill="#D8AE78"/><circle cx="200" cy="52" r="5" fill="' + a.bg + '"/>';
+    inner = 0;
+  }
+  // fixed items first, then scattered toppings around them
+  a.items.forEach(function (it) {
+    if (it.length >= 3) { s += shape(it[0], it[1], it[2], r, it[3] || 0); held.push([it[1], it[2], it[0] === "bread" ? 26 : 14]); }
+  });
+  a.items.forEach(function (it) {
+    if (it.length >= 3) return;
+    if (it[0] === "omelet") { s += shape("omelet", cx, cy, r); return; }
+    if (it[0] === "honey") { s += shape("honey", cx, cy - 6, r); return; }
+    var R0 = inner || 36, pts;
+    if (a.v === "board") pts = scatter(r, 120, 90, 38, it[1], MIN[it[0]] || 8, []).map(function (p) { return [p[0] + (r() < 0.5 ? -28 : 30), p[1]]; });
+    else if (a.v === "glass") pts = scatter(r, cx, cy, 20, it[1], 10, []);
+    else pts = scatter(r, cx, cy, R0, it[1], MIN[it[0]] || 8, held);
+    pts.forEach(function (p) { s += shape(it[0], p[0], p[1], r, r() * 360); });
+  });
+  return '<svg viewBox="0 0 240 180" preserveAspectRatio="xMidYMid slice" role="img" aria-label="' + esc(rec.name) + ', piirros ylhäältä"><g>' + s + '</g></svg>';
+}
+var ARTCACHE = {};
+function pic(rec) {
+  var p = photo(rec.id);
+  if (p) return '<img src="' + p + '" alt="' + esc(rec.name) + '">';
+  return ARTCACHE[rec.id] || (ARTCACHE[rec.id] = art(rec));
+}
+
+/* ---------- Views ---------- */
+var main = document.getElementById("main");
+var FILTERS = [["kaikki", "Kaikki"], ["nopea", "Alle 5 min"], ["etukateen", "Valmista etukäteen"], ["proteiini", "Proteiinia 15 g+"], ["halpa", "Alle 0,70 €"]];
+
+function card(r) {
+  var tag = r.tags.indexOf("etukateen") >= 0 ? '<span class="tag">Etukäteen</span>' : "";
+  return '<button class="card" data-open="' + r.id + '"><div class="pic">' + pic(r) + tag + '</div><div class="card-body"><h3>' + esc(r.name) + '</h3>' +
+    '<div class="facts"><span><b>' + r.min + '</b> min</span><span><b>' + eur(r.cost) + '</b> / annos</span><span><b>' + r.prot + ' g</b> proteiinia</span></div></div></button>';
+}
+
+function vRecipes() {
+  var f = S.filter, list = R.filter(function (r) {
+    if (f === "kaikki") return true;
+    if (f === "halpa") return r.cost < 0.70;
+    if (f === "nopea") return r.min <= 5;
+    return r.tags.indexOf(f) >= 0;
+  });
+  var h = '<div class="view-head"><h2>Aamiaiset</h2><p>Kaksitoista perusaamiaista, jotka syntyvät tavallisen marketin tuotteista. Hinnat ovat arvioita yhdelle annokselle.</p></div>';
+  h += '<div class="chips" role="group" aria-label="Rajaa">' + FILTERS.map(function (x) { return '<button class="chip" data-filter="' + x[0] + '" aria-pressed="' + (f === x[0]) + '">' + x[1] + '</button>'; }).join("") + '</div>';
+  h += list.length ? '<div class="grid">' + list.map(card).join("") + '</div>' : '<div class="empty">Ei reseptejä tällä rajauksella.</div>';
+  return h;
+}
+
+function weekCost() { var s = 0; S.plan.forEach(function (id) { if (id && BYID[id]) s += BYID[id].cost * S.people; }); return s; }
+
+function vWeek() {
+  var total = weekCost(), b = S.budget > 0 ? S.budget : 0, pct = b ? Math.min(100, total / b * 100) : 0, over = b && total > b;
+  var h = '<div class="view-head"><h2>Viikon aamiaiset</h2><p>Valitse aamiainen jokaiselle päivälle tai anna sovelluksen täyttää viikko budjetin mukaan.' + (S.example ? ' Alla on esimerkkiviikko.' : '') + '</p></div>';
+  h += '<section class="budget" aria-label="Budjetti"><div class="budget-row">' +
+    '<div class="field"><label for="budget">Budjetti / viikko</label><input id="budget" type="number" inputmode="decimal" min="0" step="1" value="' + S.budget + '"></div>' +
+    '<div class="field"><label id="pl">Syöjiä</label><div class="stepper" role="group" aria-labelledby="pl"><button data-people="-1" aria-label="Vähemmän">−</button><output>' + S.people + '</output><button data-people="1" aria-label="Enemmän">+</button></div></div>' +
+    '</div><div class="meter"><div class="meter-nums"><span class="big">' + eur(total) + '</span><span class="of">budjetista ' + eur(b) + '</span></div>' +
+    '<div class="bar' + (over ? " over" : "") + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+    '<div class="status ' + (over ? "over" : "ok") + '">' + (over ? "Ylittyy " + eur(total - b) + ". Vaihda kalleimpia päiviä tai paina Täytä viikko." : "Jää " + eur(b - total) + " (" + eur(total / Math.max(1, S.people) / 7) + " / hlö / päivä)") + '</div></div>' +
+    '<div class="actions"><button class="btn primary" data-act="fill">Täytä viikko budjetin mukaan</button><button class="btn" data-act="clear">Tyhjennä</button></div></section>';
+  h += '<ul class="days">';
+  S.plan.forEach(function (id, d) {
+    var r = id && BYID[id];
+    if (!r) { h += '<li><button class="day unset" data-day="' + d + '"><span class="dname">' + DAYS[d] + '</span><span class="thumb"></span><span class="dtext"><span class="dtitle">Valitse aamiainen</span></span></button></li>'; return; }
+    var prepNote = r.prep ? (r.prep.indexOf("sunnuntai") >= 0 ? r.prep : r.prep + " (" + DAYS_LONG[(d + 6) % 7].toLowerCase() + "na)") : "";
+    h += '<li><button class="day" data-day="' + d + '"><span class="dname">' + DAYS[d] + '</span><span class="thumb">' + pic(r) + '</span><span class="dtext"><span class="dtitle">' + esc(r.name) + '</span>' +
+      '<span class="dsub' + (prepNote ? ' prep' : '') + '">' + (prepNote ? esc(prepNote) : r.min + " min") + '</span></span><span class="dprice">' + eur(r.cost * S.people) + '</span></button></li>';
+  });
+  h += '</ul>';
+  var preps = [];
+  S.plan.forEach(function (id) { var r = id && BYID[id]; if (r && /sunnuntai/.test(r.prep) && preps.indexOf(r.prep) < 0) preps.push(r.prep); });
+  var tuore = S.plan.filter(function (id) { return id === "tuorepuuro"; }).length;
+  if (tuore) preps.push("Sekoita tuorepuurot purkkeihin " + (tuore > 1 ? "kahdessa erässä (enintään 3 päiväksi kerralla)" : "edellisenä iltana"));
+  if (preps.length) h += '<section class="prepbox"><h3>Sunnuntain valmistelut</h3><ul>' + preps.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join("") + '</ul></section>';
+  h += '<p class="note">Hinta lasketaan käytetyn määrän mukaan. Kaupassa ostat kokonaisia pakkauksia, joten ensimmäinen viikko maksaa enemmän ja seuraavat vähemmän.</p>';
+  return h;
+}
+
+function shopping() {
+  var m = {};
+  S.plan.forEach(function (id) {
+    var r = id && BYID[id]; if (!r) return;
+    r.ing.forEach(function (i) { m[i[0]] = (m[i[0]] || 0) + i[1] * S.people; });
+  });
+  return m;
+}
+
+function vShop() {
+  var m = shopping(), keys = Object.keys(m);
+  var h = '<div class="view-head"><h2>Ostoslista</h2><p>Koottu viikon suunnitelmasta ' + S.people + ' syöjälle. Ruksaa sitä mukaa kun keräät koriin.</p></div>';
+  if (!keys.length) return h + '<div class="empty">Viikolle ei ole vielä valittu aamiaisia. Aloita Viikko-välilehdeltä.</div>';
+  h += '<div class="shop-sum"><span>Arvio viikon aamiaisista</span><span class="big">' + eur(weekCost()) + '</span></div>';
+  CATS.forEach(function (c) {
+    var items = keys.filter(function (k) { return ING[k].c === c[0]; }).sort();
+    if (!items.length) return;
+    h += '<section class="shop-group"><h3>' + c[1] + '</h3><ul class="shop-list">';
+    items.forEach(function (k) {
+      var id = "s-" + k.replace(/[^a-z]/g, "");
+      h += '<li><label for="' + id + '"><input type="checkbox" id="' + id + '" data-got="' + esc(k) + '"' + (S.got[k] ? " checked" : "") + '><span class="iname">' + esc(k) + '</span><span class="iamt">' + shopAmt(m[k], ING[k].u) + '</span></label></li>';
+    });
+    h += '</ul></section>';
+  });
+  h += '<div class="actions"><button class="btn" data-act="uncheck">Poista ruksit</button></div>';
+  return h;
+}
+
+var TIPS = [
+  { when: "Sunnuntaina, 20 min", t: "Yksi valmistelusessio riittää", li: [
+    "Keitä kuusi kananmunaa kerralla. Kuorimattomina ne säilyvät jääkaapissa viikon.",
+    "Paahda pelti granolaa. Se säilyy purkissa kuukauden.",
+    "Sekoita kolme tuorepuuropurkkia maanantaista keskiviikkoon.",
+    "Paloittele ylikypsät banaanit pakastepussiin smoothieita varten."] },
+  { when: "Suunnittelu", t: "Pidä viikko yksinkertaisena", li: [
+    "Valitse 3–4 eri aamiaista ja toista niitä. Vaihtelu syntyy päälle laitettavista marjoista ja siemenistä.",
+    "Laita kiireisimmille aamuille valmiiksi tehty aamiainen ja viikonloppuun pannarit tai munakas.",
+    "Kirjoita viikon aamiaiset jääkaapin oveen. Silloin kukaan ei jää miettimään aamulla.",
+    "Kun aamu menee pieleen: ruisleipä, raejuusto ja banaani syntyvät kahdessa minuutissa."] },
+  { when: "Kaupassa", t: "Halvin terveellinen on usein pakasteessa", li: [
+    "Pakastemarjat ja -pinaatti ovat ravintoarvoiltaan yhtä hyviä kuin tuoreet ja paljon halvempia talvella.",
+    "Osta kaurahiutaleet kilon pussissa. Kauraa ei kannata ostaa annospusseina.",
+    "Maustamaton jogurtti litran purkissa maksaa noin puolet maustetusta, ja siinä on vähemmän sokeria.",
+    "Kokeile kaupan omaa merkkiä rahkasta, raejuustosta ja leivästä. Laatuero on pieni, hintaero ei."] },
+  { when: "Budjetti", t: "Aamiaiseen menee 50–90 senttiä", li: [
+    "Puurot ovat halvin aamiainen: annos maksaa alle 50 senttiä.",
+    "Proteiinia saa edullisimmin kananmunista, rahkasta ja raejuustosta.",
+    "Ensimmäisellä viikolla ostat kaapin perustuotteet. Laske niille kertaluonteisesti 8–12 €.",
+    "Pidä budjetissa noin 10 % puskuria. Hinnat vaihtelevat kaupoittain ja tarjousten mukaan."] }
+];
+var PANTRY = [["Kaurahiutaleet 1 kg", "1,60 €"], ["Ruishiutaleet 1 kg", "2,20 €"], ["Kaneli 40 g", "1,50 €"], ["Hunaja 350 g", "3,50 €"], ["Chiansiemenet 200 g", "2,00 €"], ["Auringonkukansiemenet 300 g", "1,40 €"]];
+
+function vTips() {
+  var h = '<div class="view-head"><h2>Vinkit arkeen</h2><p>Näillä tavoilla aamiaiset pysyvät helppoina ja viikon budjetti pitää.</p></div><div class="tips">';
+  TIPS.forEach(function (t) { h += '<article class="tip"><div class="when">' + t.when + '</div><h3>' + t.t + '</h3><ul>' + t.li.map(function (l) { return '<li>' + l + '</li>'; }).join("") + '</ul></article>'; });
+  h += '<article class="tip"><div class="when">Kerran kuussa</div><h3>Peruskaappi</h3><p style="margin:6px 0 0;color:var(--muted)">Nämä riittävät useaksi viikoksi. Hinnat ovat suuntaa-antavia.</p><div class="pantry">' +
+    PANTRY.map(function (p) { return '<div><span>' + p[0] + '</span><span>' + p[1] + '</span></div>'; }).join("") + '</div></article>';
+  h += '</div>';
+  return h;
+}
+
+/* ---------- Sheets ---------- */
+var sheetEl = null, lastFocus = null;
+function openSheet(title, body, onReady) {
+  closeSheet();
+  lastFocus = document.activeElement;
+  sheetEl = document.createElement("div");
+  sheetEl.className = "sheet-back";
+  sheetEl.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><div class="sheet-head"><h2>' + esc(title) + '</h2><button class="x" data-close aria-label="Sulje">×</button></div><div class="sheet-body">' + body + '</div></div>';
+  document.body.appendChild(sheetEl);
+  document.body.style.overflow = "hidden";
+  sheetEl.addEventListener("click", function (e) { if (e.target === sheetEl || e.target.closest("[data-close]")) closeSheet(); });
+  sheetEl.querySelector(".x").focus();
+  if (onReady) onReady(sheetEl);
+}
+function closeSheet() {
+  if (!sheetEl) return;
+  sheetEl.parentNode.removeChild(sheetEl); sheetEl = null; document.body.style.overflow = "";
+  if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {}
+}
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+
+function openRecipe(id) {
+  var r = BYID[id], n = S.people;
+  function body() {
+    var h = '<div class="pic">' + pic(r) + '</div>' +
+      '<div class="photo-row"><label for="ph">' + (photo(r.id) ? "Vaihda oma kuva" : "Lisää oma kuva") + '<input id="ph" type="file" accept="image/*"></label>' + (photo(r.id) ? '<button data-rmphoto>Palauta piirros</button>' : '') + '</div>' +
+      '<div class="facts" style="font-size:16px"><span><b>' + r.min + '</b> min</span><span><b>' + eur(r.cost) + '</b> / annos</span><span><b>' + r.prot + ' g</b> proteiinia</span></div>' +
+      (r.prep ? '<p class="dsub prep" style="color:var(--warn);font-weight:700;margin:8px 0 0">' + esc(r.prep) + '</p>' : '') +
+      '<div class="sec"><h3>Ainekset</h3><div class="add-row" style="margin-bottom:8px"><div class="stepper" role="group" aria-label="Annoksia"><button data-n="-1" aria-label="Vähemmän">−</button><output>' + n + '</output><button data-n="1" aria-label="Enemmän">+</button></div><span>annosta · ' + eur(r.cost * n) + '</span></div>' +
+      '<ul class="ingr">' + r.ing.map(function (i) { return '<li><span>' + esc(i[0]) + '</span><span class="amt">' + fmtAmt(i[1] * n, ING[i[0]].u) + '</span></li>'; }).join("") + '</ul></div>' +
+      '<div class="sec"><h3>Valmistus</h3><ol class="steps">' + r.steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join("") + '</ol></div>' +
+      '<div class="sec"><h3>Vinkki</h3><div class="hint">' + esc(r.tip) + '</div></div>' +
+      '<div class="sec"><h3>Lisää viikkoon</h3><div class="add-row"><select id="addday" aria-label="Päivä">' + DAYS_LONG.map(function (d, i) { return '<option value="' + i + '">' + d + '</option>'; }).join("") + '</select><button class="btn primary" data-add>Lisää</button></div></div>';
+    return h;
+  }
+  openSheet(r.name, body(), function wire(el) {
+    var b = el.querySelector(".sheet-body");
+    b.addEventListener("click", function (e) {
+      var t = e.target.closest("button"); if (!t) return;
+      if (t.hasAttribute("data-n")) { n = Math.max(1, Math.min(12, n + Number(t.getAttribute("data-n")))); rerender(); }
+      if (t.hasAttribute("data-add")) {
+        var d = Number(el.querySelector("#addday").value); S.plan[d] = r.id; S.example = false; save(); closeSheet(); render(); toast(r.name + " lisätty: " + DAYS_LONG[d].toLowerCase());
+      }
+      if (t.hasAttribute("data-rmphoto")) { try { localStorage.removeItem("photo_" + r.id); } catch (er) {} rerender(); render(); }
+    });
+    b.addEventListener("change", function (e) {
+      if (e.target.id !== "ph" || !e.target.files || !e.target.files[0]) return;
+      shrink(e.target.files[0], function (data) {
+        try { localStorage.setItem("photo_" + r.id, data); rerender(); render(); toast("Kuva tallennettu tähän selaimeen"); }
+        catch (er) { toast("Kuvaa ei voitu tallentaa: selaimen tila on täynnä"); }
+      });
+    });
+    function rerender() { var y = el.querySelector(".sheet").scrollTop; b.innerHTML = body(); el.querySelector(".sheet").scrollTop = y; }
+  });
+}
+
+function shrink(file, cb) {
+  var rd = new FileReader();
+  rd.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      var max = 900, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = function () { toast("Kuvaa ei voitu avata. Kokeile JPG- tai PNG-kuvaa."); };
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+
+function pickDay(d) {
+  var h = '<ul class="pick"><li><button class="day unset" data-pick=""><span class="dtext"><span class="dtitle">Ei aamiaista tälle päivälle</span></span></button></li>';
+  R.slice().sort(function (a, b) { return a.cost - b.cost; }).forEach(function (r) {
+    h += '<li><button class="day" data-pick="' + r.id + '"><span class="thumb">' + pic(r) + '</span><span class="dtext"><span class="dtitle">' + esc(r.name) + (S.plan[d] === r.id ? ' ✓' : '') + '</span><span class="dsub">' + r.min + ' min · ' + r.prot + ' g proteiinia</span></span><span class="dprice">' + eur(r.cost * S.people) + '</span></button></li>';
+  });
+  h += '</ul><p class="note">Hinnat ' + S.people + ' syöjälle, halvimmasta kalleimpaan.</p>';
+  openSheet(DAYS_LONG[d], h, function (el) {
+    el.querySelector(".pick").addEventListener("click", function (e) {
+      var t = e.target.closest("[data-pick]"); if (!t) return;
+      S.plan[d] = t.getAttribute("data-pick") || null; S.example = false; save(); closeSheet(); render();
+    });
+  });
+}
+
+/* Fill the week: weekdays favour quick or made-ahead breakfasts, weekend gets the slower ones; then swap the priciest days for cheaper ones until the budget holds. */
+function fillWeek() {
+  var r = rng((Date.now() / 1000) | 0);
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var quick = shuffle(R.filter(function (x) { return x.min <= 5 || x.prep; })), slow = shuffle(R.filter(function (x) { return !(x.min <= 5 || x.prep); }));
+  var plan = [];
+  for (var d = 0; d < 5; d++) plan.push(quick[d % Math.min(quick.length, 4)].id);
+  plan.push(slow[0].id, slow[1 % slow.length].id);
+  var cheap = R.slice().sort(function (a, b) { return a.cost - b.cost; });
+  var guard = 0;
+  function total() { var s = 0; plan.forEach(function (id) { s += BYID[id].cost * S.people; }); return s; }
+  while (S.budget > 0 && total() > S.budget && guard++ < 40) {
+    var hi = 0; plan.forEach(function (id, i) { if (BYID[id].cost > BYID[plan[hi]].cost) hi = i; });
+    var cur = BYID[plan[hi]], alt = null;
+    for (var k = 0; k < cheap.length; k++) { if (cheap[k].cost < cur.cost && (hi < 5 ? (cheap[k].min <= 5 || cheap[k].prep) : true)) { alt = cheap[k]; break; } }
+    if (!alt) alt = cheap[0];
+    if (alt.id === cur.id) break;
+    plan[hi] = alt.id;
+  }
+  S.plan = plan; S.example = false; save(); render();
+  var t = total();
+  toast(S.budget > 0 && t > S.budget ? "Halvinkin viikko maksaa " + eur(t) + ". Nosta budjettia hieman." : "Viikko täytetty: " + eur(t));
+}
+
+var toastT = null;
+function toast(msg) {
+  var el = document.querySelector(".toast"); if (!el) { el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 2600);
+}
+
+/* ---------- Routing + events ---------- */
+var VIEWS = { reseptit: vRecipes, viikko: vWeek, ostokset: vShop, vinkit: vTips };
+function current() { var h = (location.hash || "").replace("#", ""); return VIEWS[h] ? h : "reseptit"; }
+var lastView = null;
+function render() {
+  var v = current();
+  main.innerHTML = VIEWS[v]();
+  var links = document.querySelectorAll("nav.tabs a");
+  for (var i = 0; i < links.length; i++) { if (links[i].getAttribute("data-view") === v) links[i].setAttribute("aria-current", "page"); else links[i].removeAttribute("aria-current"); }
+  if (lastView !== v) { window.scrollTo(0, 0); lastView = v; }
+}
+window.addEventListener("hashchange", render);
+
+main.addEventListener("click", function (e) {
+  var t = e.target.closest("button"); if (!t) return;
+  if (t.hasAttribute("data-open")) openRecipe(t.getAttribute("data-open"));
+  else if (t.hasAttribute("data-filter")) { S.filter = t.getAttribute("data-filter"); save(); render(); }
+  else if (t.hasAttribute("data-day")) pickDay(Number(t.getAttribute("data-day")));
+  else if (t.hasAttribute("data-people")) { S.people = Math.max(1, Math.min(8, S.people + Number(t.getAttribute("data-people")))); save(); render(); }
+  else if (t.getAttribute("data-act") === "fill") fillWeek();
+  else if (t.getAttribute("data-act") === "clear") { S.plan = [null, null, null, null, null, null, null]; S.example = false; save(); render(); }
+  else if (t.getAttribute("data-act") === "uncheck") { S.got = {}; save(); render(); }
+});
+main.addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.id === "budget") { var v = parseFloat(String(t.value).replace(",", ".")); S.budget = isFinite(v) && v >= 0 ? v : 0; save(); render(); }
+  if (t.hasAttribute("data-got")) { var k = t.getAttribute("data-got"); if (t.checked) S.got[k] = 1; else delete S.got[k]; save(); }
+});
+
+render();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+}
+</script>
+</body>
+</html>
